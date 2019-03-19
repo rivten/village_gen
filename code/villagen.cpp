@@ -84,14 +84,26 @@ GetKanaFromIndex(u32 KanaIndex)
 	return(Result);
 }
 
-char* GenerateRandomJapaneseName(random_series* Series)
+#define VILLAGE_NAME_MAX_SIZE 5
+#define VILLAGE_NAME_MIN_SIZE 2
+
+char* GenerateRandomJapaneseName(random_series* Series, u32 MinSize, u32 MaxSize)
 {
-	u32 NameSize = RandomChoice(Series, 5) + 2;
+	Assert(MaxSize >= MinSize);
+	u32 NameSize = RandomChoice(Series, MaxSize - MinSize) + MinSize;
 	char* Result = 0;
 	for(u32 i = 0; i < NameSize; ++i)
 	{
 		u32 KanaIndex = RandomChoice(Series, MAX_KANA_INDEX);
 		kana Kana = GetKanaFromIndex(KanaIndex);
+		if(i == 0)
+		{
+			while(Kana.k0 == 'n' && Kana.k1 == 0)
+			{
+				KanaIndex = RandomChoice(Series, MAX_KANA_INDEX);
+				Kana = GetKanaFromIndex(KanaIndex);
+			}
+		}
 		if(Kana.k0 != 0)
 		{
 			buf_push(char, Result, Kana.k0);
@@ -108,10 +120,10 @@ char* GenerateRandomJapaneseName(random_series* Series)
 
 int main(int ArgumentCount, char** Arguments)
 {
-	random_series NameEntropy = RandomSeed(12345, 12874);
+	random_series NameEntropy = RandomSeed(12345, 12878);
 	for(u32 i = 0; i < 200; ++i)
 	{
-		char* Name = GenerateRandomJapaneseName(&NameEntropy);
+		char* Name = GenerateRandomJapaneseName(&NameEntropy, VILLAGE_NAME_MIN_SIZE, VILLAGE_NAME_MAX_SIZE);
 		printf("%s\n", Name);
 		buf_free(Name);
 	}
